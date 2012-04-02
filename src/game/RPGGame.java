@@ -1,9 +1,20 @@
 package game;
 
+import CycleLeftRight;
+import CycleUpDown;
+import LogicUpdater;
+import Map;
+import NPC;
+import RPGDialog;
+import RPGSprite;
+import RandomMovement;
+import StayStill;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.event.KeyEvent;
 import java.util.Comparator;
+import java.util.StringTokenizer;
 
 
 import main.Main;
@@ -12,6 +23,7 @@ import com.golden.gamedev.GameObject;
 import com.golden.gamedev.GameEngine;
 import com.golden.gamedev.object.Sprite;
 import com.golden.gamedev.object.PlayField;
+import com.golden.gamedev.util.FileUtil;
 
 
 public class RPGGame extends GameObject {
@@ -43,72 +55,75 @@ public class RPGGame extends GameObject {
 	public void initResources() {
 		map = new Map(bsLoader, bsIO);
 		playfield = new PlayField(map);
+		playfield.setComparator(new Comparator() {
+			public int compare(Object o1, Object o2) {
+				// sort based on y-order
+				return (int) (((Sprite) o1).getY()-((Sprite) o2).getY());
+			}
+		} );
 
 		hero = new RPGSprite(this, getImages("Chara1.png",3,4), 10, 10, 3, RPGSprite.DOWN);
 
 		playfield.add(hero);
 
+		String[] event = FileUtil.fileRead(bsIO.getStream("map00.evt"));
 		LogicUpdater stayStill = new StayStill();
 		LogicUpdater randomMovement = new RandomMovement();
 		LogicUpdater cycleUpDown = new CycleUpDown();
 		LogicUpdater cycleLeftRight = new CycleLeftRight();
-		
-		/******************************* Old Wise Guy ********************************/
-		
-		String[] dialogFirst = new String[4];
-		dialogFirst[0] = "HELLO TRAVELER!";
-		dialogFirst[1] = "IN ORDER TO DEFEAT THE TITAN ANDREW, ";
-		dialogFirst[2] = "YOU MUST FIRST VISIT PRINCESS VIOLET.";
-		dialogFirst[3] = "FOLLOW THIS PATH TO HER CASTLE!!";
-			
-		BufferedImage[] firstImage = getImages("Chara2.png",3,4);
-		RPGSprite first = new NPC(this,firstImage,12,13,1,0,0, stayStill,dialogFirst);
-		playfield.add(first);
-		
-		/******************************* Violet's Sign ********************************/
-		
-		String[] dialogViolet = new String[2];
-		dialogViolet[0] = "WELCOME TO";
-		dialogViolet[1] = "PRINCESS VIOLET'S CASTLE!!";
-			
-		BufferedImage[] violetSign = getImages("ChipSet3.png",3,4);
-		RPGSprite vSign = new NPC(this,violetSign,29,10,1,2,0, stayStill,dialogViolet);
-		playfield.add(vSign);
-		
-		/******************************* Random Happy Girl ********************************/
-		
-		String[] dialogHappy = new String[1];
-		dialogHappy[0] = "I LOVE PRINCESS VIOLET!!";
-			
-		BufferedImage[] happy = getImages("Chara3.png",3,4);
-		RPGSprite hGirl = new NPC(this,happy,20,8,1,3,7, randomMovement,dialogHappy);
-		playfield.add(hGirl);
-		
-		/******************************* Guard ********************************/
-		
-		String[] dialogGuard = new String[2];
-		dialogGuard[0] = "HALT!";
-		dialogGuard[1] = "ONLY THE WORTHY MAY VISIT PRINCESS VIOLET!";
-			
-		BufferedImage[] guardSign = getImages("Chara4.png",3,4);
-		RPGSprite gSign = new NPC(this,guardSign,29,12,1,2,10, cycleLeftRight,dialogGuard);
-		playfield.add(gSign);
-		
-		/******************************* Up down Purple ********************************/
-		
-		String[] dialogPurple= new String[3];
-		dialogPurple[0] = "HELP!!!";
-		dialogPurple[1] = "TITAN ANDREW HAS TAKEN OVER!";
-		dialogPurple[2] = "HELP PRINCESS VIOLET RECLAIM THE LAND!";
-			
-		BufferedImage[] purpleSign = getImages("Chara5.png",3,4);
-		RPGSprite pSign = new NPC(this,purpleSign,24,18,1,2,10, cycleUpDown,dialogPurple);
-		playfield.add(pSign);
-		
-		
+		for (int i=0;i < event.length;i++) {
+			if (event[i].startsWith("#") == false) {
+				StringTokenizer token = new StringTokenizer(event[i], ",");
+				String type 	= token.nextToken();
+				String image 	= token.nextToken();
+				int posx 		= Integer.parseInt(token.nextToken());
+				int posy 		= Integer.parseInt(token.nextToken());
+				int direction 	= Integer.parseInt(token.nextToken());
+				int speed 		= Integer.parseInt(token.nextToken());
+				int frequence 	= Integer.parseInt(token.nextToken());
+
+				String logicUpdater = token.nextToken();
+				LogicUpdater logic = stayStill;
+				if (logicUpdater.equals("random")) {
+					logic = randomMovement;
+				} else if (logicUpdater.equals("updown")) {
+					logic = cycleUpDown;
+				} else if (logicUpdater.equals("leftright")) {
+					logic = cycleLeftRight;
+				}
+
+				String[] dialogNPC = null;
+				if (token.hasMoreTokens()) {
+					StringTokenizer dialogToken = new StringTokenizer(token.nextToken(),"+");
+					dialogNPC = new String[dialogToken.countTokens()];
+					for (int j=0;j < dialogNPC.length;j++) {
+						dialogNPC[j] = dialogToken.nextToken().toUpperCase();
+					}
+				}
+
+
+				BufferedImage[] npcImage = null;
+				if (image.equals("none") == false) {
+					npcImage = getImages(image,3,4);
+				}
+
+				RPGSprite npc = new NPC(this,
+										npcImage, posx, posy,
+										speed, direction,
+										frequence, logic,
+										dialogNPC);
+				if (type.equals("stepping")) {
+					npc.setAnimate(true);
+					npc.setLoopAnim(true);
+				}
+
+				playfield.add(npc);
+			}
+		}
+
 		dialog = new Dialog(fontManager.getFont(getImage("BitmapFont.png")),
-				   getImage("DialogBox.png", false),
-				   getImage("DialogArrow.png"));
+							   getImage("DialogBox.png", false),
+							   getImage("DialogArrow.png"));
 	
 	}
 
