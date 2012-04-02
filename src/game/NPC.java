@@ -11,10 +11,13 @@ public class NPC extends RPGSprite {
 	Timer 			moveTimer;
 	LogicUpdater	logic;
 	String[]		dialog;
+	int 			health = 5;
+
+	private static boolean dead = false;
 
 
 	public NPC(RPGGame owner, BufferedImage[] images, int tileX, int tileY,
-			   int moveSpeed, int direction,
+			   int moveSpeed, int direction, 
 			   int frequence, LogicUpdater logic,
 			   String[] dialog) {
 		super(owner,images,tileX,tileY,moveSpeed,direction);
@@ -38,6 +41,24 @@ public class NPC extends RPGSprite {
 				logic.updateLogic(this, elapsedTime);
 			}
 		}
+	}
+	
+	public LogicUpdater getType()
+	{
+		return logic;
+	}
+	
+	public int getHealth()
+	{
+		return health;
+	}
+	
+	public void reduceHealth() {
+		health--;
+	}
+	
+	public static boolean isDead() {
+		return dead;
 	}
 
 }
@@ -128,4 +149,22 @@ class CycleLeftRight implements LogicUpdater {
 		}
 	}
 
+}
+
+class AttackHero implements LogicUpdater {
+	public void updateLogic(RPGSprite spr, long elapsedTime) {
+		// going left, and right
+		boolean moved = false;
+
+//		if (!NPC.isDead()) {
+//			if(hero.tileX < spr.tileX)
+//				spr.walkTo(RPGSprite.LEFT, -1, 0);
+//			else if(hero.tileX > spr.tileX)
+//				spr.walkTo(RPGSprite.RIGHT, 1, 0);
+//			else if(hero.tileY < spr.tileY)
+//				spr.walkTo(RPGSprite.UP, 0, -1);
+//			else if(hero.tileY > spr.tileY)
+//				spr.walkTo(RPGSprite.DOWN, 0, 1);		
+//		}
+	}
 }

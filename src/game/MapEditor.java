@@ -13,6 +13,7 @@ import com.golden.gamedev.util.*;
 
 
 /**
+ * e			: create an enemy
  * Arrow key	: navigate
  * Space		: switch lower/upper tile
  * Page down	: next tile
@@ -28,6 +29,7 @@ public class MapEditor extends Game {
 	Map 	map;
 	int 	tilenum;
 	int		tilemode;
+	int 	NPCmode;
 	String	uprMap, lwrMap;
 
 
@@ -53,6 +55,15 @@ public class MapEditor extends Game {
 			map.move(0, 0.2*elapsedTime);
 		}
 
+		// switch to enemy
+		if (keyPressed(KeyEvent.VK_E)) {
+			if(++NPCmode >1){
+				NPCmode = 0;
+			}
+			
+			
+		}
+		
 		// switch lower/upper tile
 		if (keyPressed(KeyEvent.VK_SPACE)) {
 			if (++tilemode > 1) {
@@ -107,6 +118,7 @@ public class MapEditor extends Game {
 			}
 			FileUtil.fileWrite(lowerTile, bsIO.setFile("map00.lwr"));
 			FileUtil.fileWrite(upperTile, bsIO.setFile("map00.upr"));
+			
 		}
 	}
 

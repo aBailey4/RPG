@@ -1,15 +1,5 @@
 package game;
 
-import CycleLeftRight;
-import CycleUpDown;
-import LogicUpdater;
-import Map;
-import NPC;
-import RPGDialog;
-import RPGSprite;
-import RandomMovement;
-import StayStill;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.event.KeyEvent;
@@ -40,6 +30,9 @@ public class RPGGame extends GameObject {
 	Dialog		dialog;
 	Fight		fight;
 	Riddle		riddle;
+	LogicUpdater	attackHero;
+	LogicUpdater 	stayStill;
+	BufferedImage	deadSnake = getImage("snake_dead.gif");
 
 	NPC				talkToNPC;			// the NPC we talk to
 	int				talkToNPCDirection;	// old NPC direction before
@@ -65,12 +58,66 @@ public class RPGGame extends GameObject {
 		hero = new RPGSprite(this, getImages("Chara1.png",3,4), 10, 10, 3, RPGSprite.DOWN);
 
 		playfield.add(hero);
-
+		
 		String[] event = FileUtil.fileRead(bsIO.getStream("map00.evt"));
-		LogicUpdater stayStill = new StayStill();
+		stayStill = new StayStill();
 		LogicUpdater randomMovement = new RandomMovement();
 		LogicUpdater cycleUpDown = new CycleUpDown();
 		LogicUpdater cycleLeftRight = new CycleLeftRight();
+		attackHero = new AttackHero();
+		
+		/******************************* Old Wise Guy ********************************/
+		
+		String[] dialogFirst = new String[4];
+		dialogFirst[0] = "HELLO TRAVELER!";
+		dialogFirst[1] = "IN ORDER TO DEFEAT THE TITAN ANDREW, ";
+		dialogFirst[2] = "YOU MUST FIRST VISIT PRINCESS VIOLET.";
+		dialogFirst[3] = "FOLLOW THIS PATH TO HER CASTLE!!";
+			
+		BufferedImage[] firstImage = getImages("Chara2.png",3,4);
+		RPGSprite first = new NPC(this,firstImage,12,13,1,0,0, stayStill,dialogFirst);
+		playfield.add(first);
+		
+		/******************************* Violet's Sign ********************************/
+		
+		String[] dialogViolet = new String[2];
+		dialogViolet[0] = "WELCOME TO";
+		dialogViolet[1] = "PRINCESS VIOLET'S CASTLE!!";
+			
+		BufferedImage[] violetSign = getImages("ChipSet3.png",3,4);
+		RPGSprite vSign = new NPC(this,violetSign,29,10,1,2,0, stayStill,dialogViolet);
+		playfield.add(vSign);
+		
+		/******************************* Random Happy Girl ********************************/
+		
+		String[] dialogHappy = new String[1];
+		dialogHappy[0] = "I LOVE PRINCESS VIOLET!!";
+			
+		BufferedImage[] happy = getImages("Chara3.png",3,4);
+		RPGSprite hGirl = new NPC(this,happy,20,8,1,3,7, randomMovement,dialogHappy);
+		playfield.add(hGirl);
+		
+		/******************************* Guard ********************************/
+		
+		String[] dialogGuard = new String[2];
+		dialogGuard[0] = "HALT!";
+		dialogGuard[1] = "ONLY THE WORTHY MAY VISIT PRINCESS VIOLET!";
+			
+		BufferedImage[] guardSign = getImages("Chara4.png",3,4);
+		RPGSprite gSign = new NPC(this,guardSign,29,12,1,2,10, cycleLeftRight,dialogGuard);
+		playfield.add(gSign);
+		
+		/******************************* Up down Purple ********************************/
+		
+		String[] dialogPurple= new String[3];
+		dialogPurple[0] = "HELP!!!";
+		dialogPurple[1] = "TITAN ANDREW HAS TAKEN OVER!";
+		dialogPurple[2] = "HELP PRINCESS VIOLET RECLAIM THE LAND!";
+			
+		BufferedImage[] purpleSign = getImages("Chara5.png",3,4);
+		RPGSprite pSign = new NPC(this,purpleSign,24,18,1,2,10, cycleUpDown,dialogPurple);
+		playfield.add(pSign);
+		
 		for (int i=0;i < event.length;i++) {
 			if (event[i].startsWith("#") == false) {
 				StringTokenizer token = new StringTokenizer(event[i], ",");
@@ -90,6 +137,8 @@ public class RPGGame extends GameObject {
 					logic = cycleUpDown;
 				} else if (logicUpdater.equals("leftright")) {
 					logic = cycleLeftRight;
+				} else if (logicUpdater.equals("enemy")) {
+					logic = attackHero;
 				}
 
 				String[] dialogNPC = null;
@@ -170,8 +219,17 @@ public class RPGGame extends GameObject {
 						}
 
 						talkToNPC = (NPC) map.getLayer3(targetX, targetY);
-
-						if (talkToNPC != null && talkToNPC.dialog != null) {
+						
+						if(talkToNPC != null && talkToNPC.getType() == attackHero)
+						{
+							talkToNPC.reduceHealth();
+							if(talkToNPC.getHealth() <= 0)
+							{
+								talkToNPC.logic = stayStill;
+								talkToNPC.setImage(deadSnake);
+							}
+						} 
+						else if (talkToNPC != null && talkToNPC.dialog != null) {
 							dialog.setDialog(talkToNPC.dialog,
 								(hero.getScreenY()+hero.getHeight() < 320));
 

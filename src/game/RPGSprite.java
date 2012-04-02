@@ -17,7 +17,8 @@ public class RPGSprite extends AdvanceSprite {
 
 	// sprite constant status
 	public static final int STANDING = 0,
-							MOVING = 1;
+							MOVING = 1,
+							FIGHTING = 2;
 
 
 	public static final int[][] movingAnimation =
